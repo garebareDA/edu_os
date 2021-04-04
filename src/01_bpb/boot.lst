@@ -1,0 +1,8 @@
+     1                                  entry:
+     2 00000000 EB58                      jmp ipl
+     3 00000002 90<rep 58h>               times 90 -($ - $$) db 0x90
+     4                                  ipl:
+     5 0000005A EBFE                      jmp $
+     6 0000005A <rep 1A2h>                times 510 - ($ - $$) db
+     6          ******************       warning: no operand for data declaration [-w+db-empty]
+     7 0000005C 55AA                      db 0x55, 0xAA
