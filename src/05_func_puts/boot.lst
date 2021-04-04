@@ -1,0 +1,79 @@
+     1                                  BOOT_LOAD equ 0x7C00
+     2                                  ORG BOOT_LOAD
+     3                                  
+     4                                  %include "../include/macro.s"
+     5                              <1> %macro cdecl 1-*.nolist
+     6                              <1>   %rep %0 - 1
+     7                              <1>     push %{-1:-1}
+     8                              <1>     %rotate -1
+     9                              <1>   %endrep
+    10                              <1>   %rotate -1
+    11                              <1>     call %1
+    12                              <1>   %if 1 < %0
+    13                              <1>     add sp, (__BITS__ >> 3) * (%0 - 1)
+    14                              <1>   %endif
+    15                              <1> %endmacro
+     5                                  
+     6                                  entry:
+     7 00000000 EB58                      jmp ipl
+     8 00000002 90<rep 58h>               times 90 -($ - $$) db 0x90
+     9                                  ipl:
+    10 0000005A FA                        cli
+    11 0000005B B80000                    mov ax, 0x0000
+    12 0000005E 8ED8                      mov ds, ax
+    13 00000060 8EC0                      mov es, ax
+    14 00000062 8ED0                      mov ss, ax
+    15 00000064 BC007C                    mov sp, BOOT_LOAD
+    16                                  
+    17 00000067 FB                        sti
+    18 00000068 8816[8400]                mov [BOOT.DRIVE], dl
+    19                                  
+    20 0000006C 68[7700]E8140083C4-       cdecl puts, .s0
+    20 00000074 02                 
+    21                                  
+    22 00000075 EBFE                      jmp $
+    23                                  
+    24 00000077 626F6F74696E672E2E-     .s0 db "booting...", 0x0A, 0x0D, 0
+    24 00000080 2E0A0D00           
+    25                                  
+    26                                  ALIGN 2, db 0
+    27                                  
+    28                                  BOOT:
+    29                                    .DRIVE:
+    30 00000084 0000                        dw 0
+    31                                  
+    32                                  %include "../modules/real/puts.s"
+    33                              <1> puts:
+    34 00000086 55                  <1>   push bp
+    35 00000087 89E5                <1>   mov bp, sp
+    36                              <1> 
+    37 00000089 50                  <1>   push ax
+    38 0000008A 53                  <1>   push bx
+    39 0000008B 56                  <1>   push si
+    40                              <1> 
+    41 0000008C 8B7604              <1>   mov si, [bp + 4]
+    42 0000008F B40E                <1>   mov ah, 0x0E
+    43 00000091 BB0000              <1>   mov bx, 0x0000
+    44                              <1> 
+    45 00000094 FC                  <1>   cld
+    46                              <1> 
+    47                              <1> .10L:
+    48 00000095 AC                  <1>   lodsb
+    49                              <1> 
+    50 00000096 3C00                <1>   cmp al, 0
+    51 00000098 7404                <1>   je .10E
+    52                              <1> 
+    53 0000009A CD10                <1>   int 0x10
+    54 0000009C EBF7                <1>   jmp .10L
+    55                              <1> 
+    56                              <1> .10E:
+    57 0000009E 5E                  <1>   pop si
+    58 0000009F 5B                  <1>   pop bx
+    59 000000A0 58                  <1>   pop ax
+    60                              <1> 
+    61 000000A1 89EC                <1>   mov sp, bp
+    62 000000A3 5D                  <1>   pop bp
+    63                              <1> 
+    64 000000A4 C3                  <1>   ret
+    33 000000A5 00<rep 159h>              times 510 - ($ - $$) db 0x00
+    34 000001FE 55AA                      db 0x55, 0xAA

@@ -1,0 +1,120 @@
+     1                                  BOOT_LOAD equ 0x7C00
+     2                                  ORG BOOT_LOAD
+     3                                  
+     4                                  %include "../include/macro.s"
+     5                              <1> %macro cdecl 1-*.nolist
+     6                              <1>   %rep %0 - 1
+     7                              <1>     push %{-1:-1}
+     8                              <1>     %rotate -1
+     9                              <1>   %endrep
+    10                              <1>   %rotate -1
+    11                              <1>     call %1
+    12                              <1>   %if 1 < %0
+    13                              <1>     add sp, (__BITS__ >> 3) * (%0 - 1)
+    14                              <1>   %endif
+    15                              <1> %endmacro
+     5                                  
+     6                                  entry:
+     7 00000000 EB58                      jmp ipl
+     8 00000002 90<rep 58h>               times 90 -($ - $$) db 0x90
+     9                                  ipl:
+    10 0000005A FA                        cli
+    11 0000005B B80000                    mov ax, 0x0000
+    12 0000005E 8ED8                      mov ds, ax
+    13 00000060 8EC0                      mov es, ax
+    14 00000062 8ED0                      mov ss, ax
+    15 00000064 BC007C                    mov sp, BOOT_LOAD
+    16                                  
+    17 00000067 FB                        sti
+    18 00000068 8816[BA00]                mov [BOOT.DRIVE], dl
+    19                                  
+    20 0000006C 68[9800]E84A0083C4-       cdecl puts, .s0
+    20 00000074 02                 
+    21                                  
+    22 00000075 B402                      mov ah, 0x02
+    23 00000077 B001                      mov al, 1
+    24 00000079 B90200                    mov cx, 0x0002
+    25 0000007C B600                      mov dh, 0x00
+    26 0000007E 8A16[BA00]                mov dl, [BOOT.DRIVE]
+    27 00000082 BB007E                    mov bx, 0x7C00 + 512
+    28 00000085 CD13                      int 0x13
+    29                                  .10Q:
+    30 00000087 730C                      jnc .10E
+    31                                  .10T:
+    32 00000089 68[A500]E82D0083C4-       cdecl puts, .e0
+    32 00000091 02                 
+    33 00000092 E84600                    call reboot
+    34                                  .10E
+    34          ******************       warning: label alone on a line without a colon might be in error [-w+label-orphan]
+    35 00000095 E96801                    jmp stage_2
+    36                                  
+    37 00000098 626F6F74696E672E2E-     .s0 db "booting...", 0x0A, 0x0D, 0
+    37 000000A1 2E0A0D00           
+    38 000000A5 4572726F723A536563-     .e0 db "Error:Sector: read", 0x0A, 0x0D, 0
+    38 000000AE 746F723A2072656164-
+    38 000000B7 0A0D00             
+    39                                  ALIGN 2, db 0
+    40                                  BOOT:
+    41                                    .DRIVE:
+    42 000000BA 0000                        dw 0
+    43                                  
+    44                                  %include "../modules/real/puts.s"
+    45                              <1> puts:
+    46 000000BC 55                  <1>   push bp
+    47 000000BD 89E5                <1>   mov bp, sp
+    48                              <1> 
+    49 000000BF 50                  <1>   push ax
+    50 000000C0 53                  <1>   push bx
+    51 000000C1 56                  <1>   push si
+    52                              <1> 
+    53 000000C2 8B7604              <1>   mov si, [bp + 4]
+    54 000000C5 B40E                <1>   mov ah, 0x0E
+    55 000000C7 BB0000              <1>   mov bx, 0x0000
+    56                              <1> 
+    57 000000CA FC                  <1>   cld
+    58                              <1> 
+    59                              <1> .10L:
+    60 000000CB AC                  <1>   lodsb
+    61                              <1> 
+    62 000000CC 3C00                <1>   cmp al, 0
+    63 000000CE 7404                <1>   je .10E
+    64                              <1> 
+    65 000000D0 CD10                <1>   int 0x10
+    66 000000D2 EBF7                <1>   jmp .10L
+    67                              <1> 
+    68                              <1> .10E:
+    69 000000D4 5E                  <1>   pop si
+    70 000000D5 5B                  <1>   pop bx
+    71 000000D6 58                  <1>   pop ax
+    72                              <1> 
+    73 000000D7 89EC                <1>   mov sp, bp
+    74 000000D9 5D                  <1>   pop bp
+    75                              <1> 
+    76 000000DA C3                  <1>   ret
+    45                                  %include "../modules/real/reboot.s"
+    46                              <1> reboot:
+    47 000000DB 68[F800]E8DBFF83C4- <1>   cdecl puts, .s0
+    47 000000E3 02                  <1>
+    48                              <1> .10L:
+    49 000000E4 B81000              <1>   mov   ax, 0x10
+    50 000000E7 CD16                <1>   int   0x16
+    51 000000E9 3C20                <1>   cmp   al, ' '
+    52 000000EB 75F7                <1>   jne   .10L
+    53 000000ED 68[1301]E8C9FF83C4- <1>   cdecl puts, .s1
+    53 000000F5 02                  <1>
+    54 000000F6 CD19                <1>   int 0x19
+    55 000000F8 0A0D50757368205370- <1> .s0 db 0x0A, 0x0D, "Push Space key to reboot", 0
+    55 00000101 616365206B65792074- <1>
+    55 0000010A 6F207265626F6F7400  <1>
+    56 00000113 0A0D0A0D00          <1> .s1 db 0x0A, 0x0D, 0x0A, 0x0D, 0
+    46                                  
+    47 00000118 00<rep E6h>               times 510 - ($ - $$) db 0x00
+    48 000001FE 55AA                      db 0x55, 0xAA
+    49                                  
+    50                                  stage_2:
+    51 00000200 68[0B02]E8B6FE83C4-       cdecl puts, .s0
+    51 00000208 02                 
+    52 00000209 EBFE                      jmp $
+    53 0000020B 326E64207374616765-     .s0 db "2nd stage..."
+    53 00000214 2E2E2E             
+    54 00000217 00<rep 1F1h>              times (1024 + 8) - ($ - $$) db 0

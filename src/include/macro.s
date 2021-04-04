@@ -9,3 +9,10 @@
     add sp, (__BITS__ >> 3) * (%0 - 1)
   %endif
 %endmacro
+
+struc drive
+  .no resw 1
+  .syln resw 1
+  .head resw 1
+  .sect resw 1
+endstruc
