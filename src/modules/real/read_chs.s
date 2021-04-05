@@ -11,8 +11,8 @@ read_chs:
   push si
 
   mov si, [bp + 4]
-  mov ch, [si + drive.syln + 0]
-  mov cl, [si + drive.syln + 1]
+  mov ch, [si + drive.cyln + 0]
+  mov cl, [si + drive.cyln + 1]
   shl cl, 6
   or cl, [si + drive.sect]
 

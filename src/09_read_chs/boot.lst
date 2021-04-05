@@ -18,7 +18,7 @@
     14                              <1> 
     15                              <1> struc drive
     16 00000000 ????                <1>   .no resw 1
-    17 00000002 ????                <1>   .syln resw 1
+    17 00000002 ????                <1>   .cyln resw 1
     18 00000004 ????                <1>   .head resw 1
     19 00000006 ????                <1>   .sect resw 1
     20                              <1> endstruc
@@ -45,17 +45,17 @@
     22 00000075 BB0F00                    mov bx, BOOT_SECT - 1
     23 00000078 B9007E                    mov cx, BOOT_LOAD + SECT_SIZE
     24                                  
-    25 0000007B 0E5368[BA00]E89B00-       cdecl read_chs, BOOT, bx, cs
+    25 0000007B 515368[BA00]E89B00-       cdecl read_chs, BOOT, bx, cx
     25 00000083 83C406             
     26                                  
     27 00000086 39D8                      cmp ax, bx
     28                                  .10Q:
-    29 00000088 740C                      jz .10E
+    29 00000088 7403                      jz .10E
     30                                  .10T:
-    31 0000008A 68[A600]E8320083C4-       cdecl puts, .e0
-    31 00000092 02                 
-    32 00000093 E84B00                    call reboot
-    33                                  .10E:
+    31 0000008A E85400                    call reboot
+    32                                  .10E:
+    33 0000008D 68[9900]E82F0083C4-       cdecl puts, .s0
+    33 00000095 02                 
     34 00000096 E96701                    jmp stage_2
     35                                  
     36 00000099 626F6F74696E672E2E-     .s0 db "booting...", 0x0A, 0x0D, 0
@@ -67,7 +67,7 @@
     39                                  BOOT:
     40                                    istruc	drive
     41 000000BA 0000                        at drive.no, dw 0
-    42 000000BC 0000                        at drive.syln, dw 0
+    42 000000BC 0000                        at drive.cyln, dw 0
     43 000000BE 0000                        at drive.head, dw 0
     44 000000C0 0200                        at drive.sect, dw 2
     45                                    iend
@@ -135,8 +135,8 @@
     60 00000129 56                  <1>   push si
     61                              <1> 
     62 0000012A 8B7604              <1>   mov si, [bp + 4]
-    63 0000012D 8A6C02              <1>   mov ch, [si + drive.syln + 0]
-    64 00000130 8A4C03              <1>   mov cl, [si + drive.syln + 1]
+    63 0000012D 8A6C02              <1>   mov ch, [si + drive.cyln + 0]
+    64 00000130 8A4C03              <1>   mov cl, [si + drive.cyln + 1]
     65 00000133 C0E106              <1>   shl cl, 6
     66 00000136 0A4C06              <1>   or cl, [si + drive.sect]
     67                              <1> 
