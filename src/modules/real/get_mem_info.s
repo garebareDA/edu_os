@@ -33,7 +33,7 @@ get_mem_info:
   mov eax, [di + 8]
   mov [ACPI_DATA.len], eax
 .15E:
-  cmp edx, 0
+  cmp ebx, 0
   jz .16E
   inc bp
   and bp, 0x07
@@ -43,7 +43,7 @@ get_mem_info:
   int 0x16
   cdecl puts, .s3
 .16E:
-  cmp edx, 0
+  cmp ebx, 0
   jne .10L
 .10E:
   cdecl	puts, .s1
