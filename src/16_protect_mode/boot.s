@@ -228,7 +228,7 @@ GDT: dq	0x00_0_0_0_0_000000_0000	; NULL
 .ds: dq	0x00_C_F_9_2_000000_FFFF	; DATA 4G
 .gdt_end:
 SEL_CODE equ	.cs - GDT						; �R�[�h�p�Z���N�^
-SEL_DATA equ	.ds - GDT	
+SEL_DATA equ	.ds - GDT
 
 GDTR:
   dw GDT.gdt_end - GDT - 1
