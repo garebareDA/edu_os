@@ -856,7 +856,7 @@
    218 00000975 75F8                      jne .10L
    219 00000977 B81200                    mov ax, 0x0012
    220 0000097A CD10                      int 0x10
-   221 0000097C EBFE                      jmp $
+   221 0000097C EB5E                      jmp stage_7
    222 0000097E 367468207374616765-       .s0		db	"6th stage...", 0x0A, 0x0D, 0x0A, 0x0D
    222 00000987 2E2E2E0A0D0A0D     
    223 0000098E 205B50757368205350-     		db	" [Push SPACE key to protect mode...]", 0x0A, 0x0D, 0
@@ -864,4 +864,49 @@
    223 000009A0 6F2070726F74656374-
    223 000009A9 206D6F64652E2E2E5D-
    223 000009B2 0A0D00             
-   224 000009B5 00<rep 164Bh>               times BOOT_SIZE - ($ - $$) db 0
+   224                                  
+   225 000009B5 00<rep 3h>              ALIGN 4, db 0
+   226 000009B8 0000000000000000        GDT: dq	0x00_0_0_0_0_000000_0000	; NULL
+   227 000009C0 FFFF0000009ACF00        .cs: dq	0x00_C_F_9_A_000000_FFFF	; CODE 4G
+   228 000009C8 FFFF00000092CF00        .ds: dq	0x00_C_F_9_2_000000_FFFF	; DATA 4G
+   229                                  .gdt_end:
+   230                                  SEL_CODE equ	.cs - GDT						; �R�[�h�p�Z���N�^
+   231                                  SEL_DATA equ	.ds - GDT	
+   232                                  
+   233                                  GDTR:
+   234 000009D0 1700                      dw GDT.gdt_end - GDT - 1
+   235 000009D2 [B8090000]                dd GDT
+   236                                  IDTR:
+   237 000009D6 0000                      dw 0
+   238 000009D8 00000000                  dd 0
+   239                                  
+   240                                  stage_7:
+   241 000009DC FA                        cli
+   242 000009DD 0F0116[D009]              lgdt [GDTR]
+   243 000009E2 0F011E[D609]              lidt [IDTR]
+   244                                  
+   245 000009E7 0F20C0                    mov eax, cr0
+   246 000009EA 83C801                    or ax, 1
+   247 000009ED 0F22C0                    mov cr0, eax
+   248                                  
+   249 000009F0 EB00                      jmp $ + 2
+   250                                    [BITS 32]
+   251 000009F2 66                        DB 0x66
+   252 000009F3 EA[FA090000]0800          jmp SEL_CODE:CODE_32
+   253                                  
+   254                                  CODE_32:
+   255 000009FA 66B81000                  mov ax, SEL_DATA
+   256 000009FE 8ED8                      mov ds, ax
+   257 00000A00 8EC0                      mov es, ax
+   258 00000A02 8EE0                      mov fs, ax
+   259 00000A04 8EE8                      mov gs, ax
+   260 00000A06 8ED0                      mov ss, ax
+   261                                  
+   262 00000A08 B900080000                mov ecx, (KERNEL_SIZE) / 4
+   263 00000A0D BE009C0000                mov esi, BOOT_END
+   264 00000A12 BF00101000                mov edi, KERNEL_LOAD
+   265 00000A17 FC                        cld
+   266 00000A18 F3A5                      rep movsd
+   267 00000A1A E9(00101000)              jmp KERNEL_LOAD
+   268                                  
+   269 00000A1F 00<rep 15E1h>               times BOOT_SIZE - ($ - $$) db 0

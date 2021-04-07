@@ -218,7 +218,52 @@ stage_6:
   jne .10L
   mov ax, 0x0012
   int 0x10
-  jmp $
+  jmp stage_7
   .s0		db	"6th stage...", 0x0A, 0x0D, 0x0A, 0x0D
 		db	" [Push SPACE key to protect mode...]", 0x0A, 0x0D, 0
+
+ALIGN 4, db 0
+GDT: dq	0x00_0_0_0_0_000000_0000	; NULL
+.cs: dq	0x00_C_F_9_A_000000_FFFF	; CODE 4G
+.ds: dq	0x00_C_F_9_2_000000_FFFF	; DATA 4G
+.gdt_end:
+SEL_CODE equ	.cs - GDT						; �R�[�h�p�Z���N�^
+SEL_DATA equ	.ds - GDT	
+
+GDTR:
+  dw GDT.gdt_end - GDT - 1
+  dd GDT
+IDTR:
+  dw 0
+  dd 0
+
+stage_7:
+  cli
+  lgdt [GDTR]
+  lidt [IDTR]
+
+  mov eax, cr0
+  or ax, 1
+  mov cr0, eax
+
+  jmp $ + 2
+  [BITS 32]
+  DB 0x66
+  jmp SEL_CODE:CODE_32
+
+CODE_32:
+  mov ax, SEL_DATA
+  mov ds, ax
+  mov es, ax
+  mov fs, ax
+  mov gs, ax
+  mov ss, ax
+
+  mov ecx, (KERNEL_SIZE) / 4
+  mov esi, BOOT_END
+  mov edi, KERNEL_LOAD
+  cld
+  rep movsd
+  jmp KERNEL_LOAD
+
     times BOOT_SIZE - ($ - $$) db 0

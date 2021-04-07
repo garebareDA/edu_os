@@ -205,7 +205,20 @@ stage_5:
   cdecl puts, .e0
   call reboot
 .10E:
-  jmp $
+  jmp stage_6
 .s0 db "5th stage...", 0x0A, 0x0D, 0
 .e0 db "Failure load kernel ...", 0x0A, 0x0D, 0
+
+stage_6:
+  cdecl puts, .s0
+.10L:
+  mov ah, 0x00
+  int 0x16
+  cmp al, ' '
+  jne .10L
+  mov ax, 0x0012
+  int 0x10
+  jmp $
+  .s0		db	"6th stage...", 0x0A, 0x0D, 0x0A, 0x0D
+		db	" [Push SPACE key to protect mode...]", 0x0A, 0x0D, 0
     times BOOT_SIZE - ($ - $$) db 0
