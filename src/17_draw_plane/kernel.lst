@@ -1,0 +1,106 @@
+     1                                  %include "../include/define.s"
+     2                              <1> BOOT_LOAD equ 0x7C00
+     3                              <1> BOOT_END equ (BOOT_LOAD + BOOT_SIZE)
+     4                              <1> 
+     5                              <1> BOOT_SIZE equ (1024) * 8
+     6                              <1> SECT_SIZE equ (512)
+     7                              <1> BOOT_SECT equ (BOOT_SIZE / SECT_SIZE)
+     8                              <1> KERNEL_SECT equ (KERNEL_SIZE / SECT_SIZE)
+     9                              <1> E820_RECORD_SIZE equ 20
+    10                              <1> 
+    11                              <1> KERNEL_LOAD equ 0x0010_1000
+    12                              <1> KERNEL_SIZE equ (1024 * 8)
+     2                                  %include "../include/macro.s"
+     3                              <1> %macro cdecl 1-*.nolist
+     4                              <1>   %rep %0 - 1
+     5                              <1>     push %{-1:-1}
+     6                              <1>     %rotate -1
+     7                              <1>   %endrep
+     8                              <1>   %rotate -1
+     9                              <1>     call %1
+    10                              <1>   %if 1 < %0
+    11                              <1>     add sp, (__BITS__ >> 3) * (%0 - 1)
+    12                              <1>   %endif
+    13                              <1> %endmacro
+    14                              <1> 
+    15                              <1> struc drive
+    16 00000000 ????                <1>   .no resw 1
+    17 00000002 ????                <1>   .cyln resw 1
+    18 00000004 ????                <1>   .head resw 1
+    19 00000006 ????                <1>   .sect resw 1
+    20                              <1> endstruc
+     3                                  
+     4                                    ORG KERNEL_LOAD
+     5                                  [BITS 32]
+     6                                  kernel:
+     7 00000000 BE007E0000                mov esi, BOOT_LOAD + SECT_SIZE
+     8 00000005 0FB706                    movzx eax, word  [esi + 0]
+     9 00000008 0FB75E02                  movzx ebx, word [esi + 2]
+    10 0000000C C1E004                    shl eax, 4
+    11 0000000F 01D8                      add eax, ebx
+    12 00000011 A3[D8000000]              mov [FONT_ADR], eax
+    13                                  
+    14 00000016 B407                      mov ah, 0x07
+    15 00000018 B002                      mov al, 0x02
+    16 0000001A 66BAC403                  mov dx, 0x03c4
+    17 0000001E 66EF                      out dx, ax
+    18                                  
+    19 00000020 C60500000A00FF            mov [0x000A_0000 + 0], byte 0xFF
+    20                                  
+    21 00000027 B404                      mov ah, 0x04
+    22 00000029 66EF                      out dx, ax
+    23                                  
+    24 0000002B C60501000A00FF            mov [0x000A_0000 + 1], byte 0xFF
+    25                                  
+    26 00000032 B402                      mov ah, 0x02
+    27 00000034 66EF                      out dx, ax
+    28                                  
+    29 00000036 C60502000A00FF            mov [0x000A_0000 + 2], byte 0xFF
+    30                                  
+    31 0000003D B401                      mov ah, 0x01
+    32 0000003F 66EF                      out dx, ax
+    33                                  
+    34 00000041 C60503000A00FF            mov [0x000A_0000 + 3], byte 0xFF
+    35                                  
+    36 00000048 B402                      mov ah, 0x02
+    37 0000004A 66EF                      out dx, ax
+    38                                  
+    39 0000004C 8D3D50000A00              lea edi, [0x000A_0000 + 80]
+    40 00000052 B950000000                mov ecx, 80
+    41 00000057 B0FF                      mov al, 0xFF
+    42 00000059 F3AA                      rep stosb
+    43                                  
+    44 0000005B BF01000000                mov edi, 1
+    45                                  
+    46 00000060 C1E708                    shl edi, 8
+    47 00000063 8DBCBF00000A00            lea edi, [edi * 4 + edi + 0xA_0000]
+    48                                  
+    49 0000006A 66C707FF00                mov [edi + (80 * 0)], word 0xFF
+    50 0000006F 66C74750FF00              mov [edi + (80 * 1)], word 0xFF
+    51 00000075 66C787A0000000FF00        mov [edi + (80 * 2)], word 0xFF
+    52 0000007E 66C787F0000000FF00        mov [edi + (80 * 3)], word 0xFF
+    53 00000087 66C78740010000FF00        mov [edi + (80 * 4)], word 0xFF
+    54 00000090 66C78790010000FF00        mov [edi + (80 * 5)], word 0xFF
+    55 00000099 66C787E0010000FF00        mov [edi + (80 * 6)], word 0xFF
+    56 000000A2 66C78730020000FF00        mov [edi + (80 * 7)], word 0xFF
+    57                                  
+    58 000000AB BE41000000                mov esi, 'A'
+    59 000000B0 C1E604                    shl esi, 4
+    60 000000B3 0335[D8000000]            add esi, [FONT_ADR]
+    61                                  
+    62 000000B9 BF02000000                mov edi, 2
+    63 000000BE C1E708                    shl edi, 8
+    64 000000C1 8DBCBF00000A00            lea edi, [edi * 4 + edi + 0xA_0000]
+    65 000000C8 B910000000                mov ecx, 16
+    66                                  
+    67                                  .10L:
+    68 000000CD A4                        movsb
+    69 000000CE 83C74F                    add edi, 80 - 1
+    70 000000D1 E2FA                      loop .10L
+    71                                  
+    72 000000D3 EBFE                      jmp $
+    73                                  
+    74 000000D5 00<rep 3h>              ALIGN 4, db 0
+    75 000000D8 00000000                FONT_ADR: dd 0
+    76                                  
+    77 000000DC 00<rep 1F24h>             times KERNEL_SIZE - ($ - $$) db 0
