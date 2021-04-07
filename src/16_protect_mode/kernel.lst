@@ -29,8 +29,9 @@
     18 00000004 ????                <1>   .head resw 1
     19 00000006 ????                <1>   .sect resw 1
     20                              <1> endstruc
-     3                                    ORG KERNEL_LOAD
-     4                                  [BITS 32]
-     5                                  kernel:
-     6 00000000 EBFE                      jmp $
-     7 00000002 00<rep 1FFEh>             times KERNEL_SIZE - ($ - $$) db 0
+     3                                  
+     4                                    ORG KERNEL_LOAD
+     5                                  [BITS 32]
+     6                                  kernel:
+     7 00000000 EBFE                      jmp $
+     8 00000002 00<rep 1FFEh>             times KERNEL_SIZE - ($ - $$) db 0

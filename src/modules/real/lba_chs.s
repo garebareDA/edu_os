@@ -9,13 +9,13 @@ lba_chs:
   push di
 
   mov si, [bp + 4]
-  mov di, [bp + 4]
+  mov di, [bp + 6]
 
   mov al, [si + drive.head]
   mul byte [si + drive.sect]
   mov bx, ax
 
-  mov bx, 0
+  mov dx, 0
   mov ax, [bp + 8]
   div bx
 

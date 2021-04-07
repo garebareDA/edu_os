@@ -205,7 +205,7 @@ stage_5:
   cdecl puts, .e0
   call reboot
 .10E:
-  jmp $
+  jmp stage_6
 .s0 db "5th stage...", 0x0A, 0x0D, 0
 .e0 db "Failure load kernel ...", 0x0A, 0x0D, 0
 
