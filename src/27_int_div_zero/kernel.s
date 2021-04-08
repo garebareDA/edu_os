@@ -11,13 +11,20 @@ kernel:
   add eax, ebx
   mov [FONT_ADR], eax
 
+  cdecl init_int
+  set_vect 0x00, int_zero_div
+
   cdecl draw_font, 63, 13
   cdecl draw_color_bar, 63, 4
   cdecl draw_str, 25, 14, 0x010F, .s0
 
-  push 0x11223344
-  pushf
-  call 0x0008:int_default
+  mov al, 0
+  div al
+
+.10L:
+  cdecl	rtc_get_time, RTC_TIME			;   EAX = get_time(&RTC_TIME);
+	cdecl	draw_time, 72, 0, 0x0700, dword [RTC_TIME]
+	jmp		.10L
 
   jmp $
 
