@@ -37,3 +37,8 @@ struc drive
   out %1, al
 %endmacro
 
+struc ring_buff
+  .rp resd 1
+  .wp resd 1
+  .item resd RING_ITEM_SIZE
+  endstruc
