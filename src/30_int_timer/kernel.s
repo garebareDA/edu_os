@@ -15,12 +15,14 @@ kernel:
   cdecl	init_pic
 
   set_vect 0x00, int_zero_div
+  set_vect 0x20, int_timer
   set_vect 0x21, int_keyboard
   set_vect 0x28, int_rtc
 
   cdecl rtc_int_en, 0x10
+  cdecl	int_en_timer0
 
-  outp 0x21, 0b1111_1001
+  outp 0x21, 0b1111_1000
   outp 0xA1, 0b1111_1110
 
   sti
@@ -34,7 +36,7 @@ kernel:
   mov eax, [RTC_TIME]
   cdecl draw_time, 72, 0, 0x0700, eax
 
-  cdecl draw_rotation_bar
+  cdecl	draw_rotation_bar
 
   cdecl ring_rd, _KEY_BUFF, .int_key
   cmp eax, 0
@@ -69,6 +71,8 @@ RTC_TIME: dd 0
 %include  "../modules/protect/int_rtc.s"
 %include  "../modules/protect/ring_buff.s"
 %include "../modules/protect/int_keyboard.s"
-%include  "../modules/protect/draw_rotation_bar.s"
+%include "modules/int_timer.s"
+%include "../modules/protect/timer.s"
+%include "../modules/protect/draw_rotation_bar.s"
 
   times KERNEL_SIZE - ($ - $$) db 0x00
