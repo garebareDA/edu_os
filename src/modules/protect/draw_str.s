@@ -19,7 +19,12 @@ draw_str:
   lodsb
   cmp al, 0
   je .10E
-  cdecl draw_char, ecx, edx, ebx, eax
+
+  %ifdef USE_SYSTEM_CALL
+    int 0x81
+  %else
+    cdecl draw_char, ecx, edx, ebx, eax
+  %endif
 
   inc ecx
   cmp ecx, 80
